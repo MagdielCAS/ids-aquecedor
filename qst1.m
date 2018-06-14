@@ -6,6 +6,8 @@ clear
 clc
 
 %% Definição dos dados
+plotar = 3; % 1 - MQ; 2 - MQR; 3 - Os dois; 4 - Nenhum
+
 % Divisão das parcelas para identificação e validação
 N = 200;    % numero de amostras.
 pN = 0.3;   % parcela de N para identificação (0 < pN < 1).
@@ -35,6 +37,14 @@ Ti = (1:Ni)';
 
 y = lsim(G,u,Ti);
 
+% Numero de parametros a estimar
+na = 2;
+nb = 1;
+
+dim = na+nb+1; % dimensão
+m = max(na,nb+1); % n máximo
+d=0; % atraso de entrada
+
 % % plotando a resposta real
 % figure
 % plot(u),title('Entrada PRBS'),
@@ -42,14 +52,9 @@ y = lsim(G,u,Ti);
 
 %% METODO 1 - MQ
 
-% Numero de parametros a estimar
-na = 2;
-nb = 1;
 
-dim = na+nb+1;
-m = max(na,nb+1);
 
-% matriz de observa��o
+% matriz de observação
 phi = zeros(Ni,dim);
 for t=m+1:Ni
     phi(t,:) = [-y(t-(1:na))' u(t-(0:nb))'];
@@ -57,40 +62,111 @@ end
 
 % valor da matriz estimada dos parametros
 theta = phi'*phi\phi'*y;
-% fun��o estimada
+% função estimada
 yest = phi*theta;
 
-% obtendo a fun��o de transferencia
+% obtendo a função de transferencia
 den = [1 theta(1:na)'];
 num = [theta(na+1:dim)' 0];
-% fun��o discreta
+% função discreta
 Hs = tf(num,den,1);
-% fun��o continua
+% função continua
 Hsc = d2c(Hs);
 
 % RESULTADOS
-% Dados que foram Estimados
-figure
-plot(y)
-hold on
-plot(yest)
-title('Dados de saida na Estima��o')
-legend('Real','Estimado')
-grid on
+if plotar == 1 || plotar == 3
+    % Dados que foram Estimados
+    figure
+    plot(y)
+    hold on
+    plot(yest)
+    title('Dados de saida na Estimação MQ')
+    legend('Real','Estimado')
+    grid on
 
-% Validando os dados
-uv = idinput(Nv,'prbs',[0 0.25],[0,1]);
-Tv = (1:Nv)';
+    % Validando os dados
+    uv = idinput(Nv,'prbs',[0 0.25],[0,1]);
+    Tv = (1:Nv)';
 
-yv = lsim(G,uv,Tv);
-yest = lsim(Hsc,uv,Tv);
+    yv = lsim(G,uv,Tv);
+    yest = lsim(Hsc,uv,Tv);
 
-% Compara��o entre os dados de Valida��o
-figure
-plot(yv)
-hold on
-plot(yest)
-title('Dados de saida na valida��o')
-legend('Real','Estimado')
-grid on
+    % Comparação entre os dados de Validação
+    figure
+    plot(yv)
+    hold on
+    plot(yest)
+    title('Dados de saida na validação MQ')
+    legend('Real','Estimado')
+    grid on
+
+end
+
+%% Método 2 - MQR
+
+
+% vetor de parametros
+theta = [a(1:na) b(1:nb+1)]';
+
+%valores iniciais
+param = zeros(dim,Ni);
+erro = zeros(Ni,1);
+phi = zeros(dim,1);
+yMqrEst = zeros(Ni,1);
+p = zeros(dim,dim);
+e = zeros(Ni,1);
+
+% MQR
+for t = dim : Ni
+   yMqrEst(t) = phi'*theta + e(t); %obtendo valores de saída
+   
+   phi = [-yMqrEst(t-(1:na)); u(t-d-(0:nb))]; % alterando matriz de observação
+   
+   erro(t) = yMqrEst(t)-phi'*theta; % calculando erro
+   
+   K = p*phi/(1+phi'*p*phi); % calculando ganho
+   
+   theta = theta+(K*erro(t)); % nova matriz de estimadores
+   
+   p = p - K*(phi'*p); % calculando matriz de covariância
+   
+   param(:,t) = theta; % atualizando vetor de parametros
+end
+
+% obtendo a função de transferencia
+denMqr = [1 theta(1:na)'];
+numMqr = [theta(na+1:dim)' 0];
+% função discreta
+HsMqr = tf(numMqr,denMqr,1);
+% função continua
+HscMqr = d2c(HsMqr);
+
+% RESULTADOS
+if plotar == 2 || plotar == 3
+    % Dados que foram Estimados
+    figure
+    plot(1:Ni,y)
+    hold on
+    plot(1:Ni,yMqrEst)
+    title('Dados de saida na Estimação MQR')
+    legend('Real','Estimado')
+    grid on
+
+    % Validando os dados
+    uv = idinput(Nv,'prbs',[0 0.25],[0,1]);
+    Tv = (1:Nv)';
+
+    yv = lsim(G,uv,Tv);
+    yMqrEst = lsim(HscMqr,uv,Tv);
+
+    % Comparação entre os dados de Validação
+    figure
+    plot(1:Nv,yv)
+    hold on
+    plot(1:Nv,yMqrEst)
+    title('Dados de saida na validação MQR')
+    legend('Real','Estimado')
+    grid on
+end
+
 
