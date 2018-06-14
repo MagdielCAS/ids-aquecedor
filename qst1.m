@@ -1,28 +1,33 @@
-% IdentificaÁ„o de Sistemas
-% Quest„o 1 do projeto final de IdentificaÁ„o de sistemas
+% Identifica√ß√£o de Sistemas
+% Quest√£o 1 do projeto final de Identifica√ß√£o de sistemas
 % Autores: Nicollas e Magdiel
+close all
 clear
 clc
 
-%% DefiniÁ„o dos dados
-% Divis„o das parcelas para identificaÁ„o e validaÁ„o
+%% Defini√ß√£o dos dados
+% Divis√£o das parcelas para identifica√ß√£o e valida√ß√£o
 N = 200;    % numero de amostras.
-pN = 0.3;   % parcela de N para identificaÁ„o (0 < pN < 1).
+pN = 0.3;   % parcela de N para identifica√ß√£o (0 < pN < 1).
 
-Ni = N*pN;  % Parcela para identificaÁ„o
-Nv = N-Ni;  % Parcela para identificaÁ„o
+Ni = N*pN;  % Parcela para identifica√ß√£o
+Nv = N-Ni;  % Parcela para valida√ß√£o
 
-% A funÁ„o de transferencia
+% A fun√ß√£o de transferencia
 num = [1 5];
 den = conv([1 1],[1 4]);
-G = tf(num,den); % funÁ„o de transferencia continua
+G = tf(num,den); % fun√ß√£o de transferencia continua
 
 Ts = 1;
-Gd = c2d(G,Ts); % funÁ„o de transferencia discreta
+Gd = c2d(G,Ts); % fun√ß√£o de transferencia discreta
 
-% Obtemos os valores de a1 e a2, b0 e b1 da funÁ„o acima
-a = [-0.3862 0.0067];
-b = [0.761 0.0147];
+% Obtemos os valores de a1 e a2, b0 e b1 da fun√ß√£o acima
+[numData, denData] = tfdata(Gd,'v');
+grau = length(denData);
+% pega os par√¢metros da fun√ß√£o eliminando os zeros iniciais gerados pelos
+% graus diferentes do numerador e denominador
+a = denData(find(denData,1,'first')+1:grau); % a1 ... an
+b = numData(find(numData,1,'first'):grau); % b0 ... bn
 
 % resposta do sistema ao sinal PRBS e a um rudio branco
 u = idinput(Ni,'prbs',[0 0.5],[0,1]);
@@ -44,7 +49,7 @@ nb = 1;
 dim = na+nb+1;
 m = max(na,nb+1);
 
-% matriz de observaÁ„o
+% matriz de observaÔøΩÔøΩo
 phi = zeros(Ni,dim);
 for t=m+1:Ni
     phi(t,:) = [-y(t-(1:na))' u(t-(0:nb))'];
@@ -52,15 +57,15 @@ end
 
 % valor da matriz estimada dos parametros
 theta = phi'*phi\phi'*y;
-% funÁ„o estimada
+% funÔøΩÔøΩo estimada
 yest = phi*theta;
 
-% obtendo a funÁ„o de transferencia
+% obtendo a funÔøΩÔøΩo de transferencia
 den = [1 theta(1:na)'];
 num = [theta(na+1:dim)' 0];
-% funÁ„o discreta
+% funÔøΩÔøΩo discreta
 Hs = tf(num,den,1);
-% funÁ„o continua
+% funÔøΩÔøΩo continua
 Hsc = d2c(Hs);
 
 % RESULTADOS
@@ -69,7 +74,7 @@ figure
 plot(y)
 hold on
 plot(yest)
-title('Dados de saida na EstimaÁ„o')
+title('Dados de saida na EstimaÔøΩÔøΩo')
 legend('Real','Estimado')
 grid on
 
@@ -80,12 +85,12 @@ Tv = (1:Nv)';
 yv = lsim(G,uv,Tv);
 yest = lsim(Hsc,uv,Tv);
 
-% ComparaÁ„o entre os dados de ValidaÁ„o
+% ComparaÔøΩÔøΩo entre os dados de ValidaÔøΩÔøΩo
 figure
 plot(yv)
 hold on
 plot(yest)
-title('Dados de saida na validaÁ„o')
+title('Dados de saida na validaÔøΩÔøΩo')
 legend('Real','Estimado')
 grid on
 
