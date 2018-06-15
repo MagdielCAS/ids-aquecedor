@@ -113,16 +113,14 @@ param = zeros(dim,Ni);
 erro = zeros(Ni,1);
 phi = zeros(dim,1);
 yMqrEst = zeros(Ni,1);
-p = zeros(dim,dim);
+p = 1000*eye(dim,dim);
 e = zeros(Ni,1);
 
 % MQR
 for t = dim : Ni
-   yMqrEst(t) = phi'*theta + e(t); %obtendo valores de saída
-   
    phi = [-yMqrEst(t-(1:na)); u(t-d-(0:nb))]; % alterando matriz de observação
    
-   erro(t) = yMqrEst(t)-phi'*theta; % calculando erro
+   erro(t) = y(t)-phi'*theta; % calculando erro
    
    K = p*phi/(1+phi'*p*phi); % calculando ganho
    
@@ -131,6 +129,8 @@ for t = dim : Ni
    p = p - K*(phi'*p); % calculando matriz de covariância
    
    param(:,t) = theta; % atualizando vetor de parametros
+   
+   yMqrEst(t) = phi'*theta + e(t); %obtendo valores de saída
 end
 
 % obtendo a função de transferencia

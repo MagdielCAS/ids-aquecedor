@@ -36,11 +36,11 @@ theta = zeros(dim,1);
 % vetor de medidas
 phi = zeros(dim,1);
 % Matriz de covanriancia inicial
-p = 1000*eye(dim,dim);
+p = eye(dim,dim);
 
-%% Aplica��o do MQR
+%% Aplicação do MQR
 
-% Definindo intervalos para as possi��es iniciais de phi()
+% Definindo intervalos para as possições iniciais de phi()
 m = min(na,nb);  % menor qdt de n's  entre A e B
 lim = max(na,nb)+1;  % diferen�a de n's entre A e B
 
@@ -48,7 +48,7 @@ for t = 1:lim
     % valor de b0 sempre � u(t)
     phi(na+1) = u(t);
     % verificando os intervalos de phi
-    if(t>1 && t<=m+1) % intervalo de a1,b1 at� am,bm
+    if(t>1 && t<=m+1) % intervalo de a1,b1 até am,bm
        for i = 1:t-1
            phi(i) = -y(t-i);         % a1 � am
            phi(na+1+i) = u(t-i);    % b1 � bm
@@ -113,7 +113,7 @@ Hsc1 = d2c(Hs1);
 % Comparação entre os dados Identificados
 figure
 plot(y)
-title('Estima��o da Resposta de um Aquecedor')
+title('Estimação da Resposta de um Aquecedor')
 hold on
 plot(yest)
 legend('Real','Estimado')
@@ -124,7 +124,7 @@ figure
 lsim(Hsc1,u_val,T)
 hold on
 plot(y_val)
-title('Dados de saida para valida��o')
+title('Dados de saida para validação')
 grid on
 
 %% MÉTODO 2 - Usando MQ
@@ -159,7 +159,7 @@ figure
 lsim(Hsc2,u_val,T)
 hold on
 plot(y_val)
-title('Dados de saida para valida��o')
+title('Dados de saida para validação')
 grid on
 
 %% METODO 3 - Usando a correlação
